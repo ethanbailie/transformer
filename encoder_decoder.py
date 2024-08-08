@@ -25,7 +25,7 @@ class LayerNorm(nn.module):
     
     def __init__(self, features, eps=1e-6):
         '''
-        features here is the number of features in the input layer (size of input tensor's final dimension)
+        features here is the number of features in the input layer (size of input tensor)
         epsilon is a very small value that is here so we dont try to divide by 0 or anything like that
 
         initializes a_2 and b_2 as a matrix of ones and a matrix of zeroes of size features respectively
@@ -55,9 +55,29 @@ class LayerNorm(nn.module):
 ## architecture blocks
 class Encoder():
     '''
-    encoder block of the transformer architecture (left side of paper's diagram)
+    just the core part of the encoder block without attention and feed forward
+    this lets us experiment with those features separately for cleaner debugging
     '''
-    
+
+    def __init__(self, layer, N):
+        '''
+        initializes layers as N clones of the initial layer
+        initializes normalization to have a dimensionality of the size of the input layer
+        '''
+        super(Encoder, self).__init__()
+        self.layers = clone(layer, N)
+        self.norm = LayerNorm(layer.size)
+
+    def forward(self, x, mask):
+        '''
+        forward prop for the encoder
+
+        for every layer in the encoder, it is applying the layer and the mask to x
+        we then perform layer norm on x and return that
+        '''
+        for layer in self.layers:
+            x = layer(x, mask)
+        return self.norm(x)
 
 class Decoder():
     '''
