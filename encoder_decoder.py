@@ -51,7 +51,24 @@ class LayerNorm(nn.module):
         std = x.std(-1, keepdim=True)
         return self.a_2 * ((x - mean) / (std + self.eps)) + self.b_2
 
+class SublayerConnection(nn.Module):
+    '''
+    this is a residual + layer norm 
+    basically this speeds up training, reduce odds of vanishing gradients, and improves scalability
+    '''
+    def __init__(self, size, dropout):
+        super(SublayerConnection, self).__init__()
+        self.norm = LayerNorm(size)
+        self.dropout = nn.Dropout(dropout)
 
+    def forward(self, x, sublayer):
+        '''
+        as per Attention is All You Need:
+        'The output of each sub-layer is LayerNorm(x + Sublayer(x)), where Sublayer(x) is the function implemented by the sub-layer itself. 
+        We apply dropout to the output of each sub-layer, before it is added to the sub-layer input and normalized.'
+        '''
+        return self.norm(x + self.dropout(sublayer(x)))
+    
 ## architecture blocks
 class Encoder():
     '''
